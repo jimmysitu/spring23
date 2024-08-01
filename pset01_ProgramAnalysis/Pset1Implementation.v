@@ -145,43 +145,72 @@ Module Impl.
    * that running the program [p] should result in, when the
    * initial state is [n].
    *)
-  Fixpoint run (p : Prog) (initState : nat) : nat.
-  Admitted.
+  Fixpoint run (p : Prog) (initState : nat) : nat :=
+    match p with
+    | Done => initState
+    | AddThen n p' => run p' (initState + n)
+    | MulThen n p' => run p' (initState * n)
+    | DivThen n p' => run p' (initState / n)
+    | VidThen n p' => run p' (n / initState)
+    | SetToThen n p' => run p' n
+    end.
 
   Theorem run_Example1 : run Done 0 = 0.
   Proof.
-  Admitted.
+    simpl. reflexivity.
+  Qed.
 
   Theorem run_Example2 : run (MulThen 5 (AddThen 2 Done)) 1 = 7.
   Proof.
-  Admitted.
+    simpl. reflexivity.
+  Qed.
 
   Theorem run_Example3 : run (SetToThen 3 (MulThen 2 Done)) 10 = 6.
   Proof.
-  Admitted.
+    simpl. reflexivity.
+  Qed.
 
   (* Define [numInstructions] to compute the number of instructions
    * in a program, not counting [Done] as an instruction.
    *)
-  Fixpoint numInstructions (p : Prog) : nat.
-  Admitted.
+  Fixpoint numInstructions (p : Prog) : nat :=
+    match p with
+    | Done => 0
+    | AddThen _ p' => 1 + numInstructions p'
+    | MulThen _ p' => 1 + numInstructions p'
+    | DivThen _ p' => 1 + numInstructions p'
+    | VidThen _ p' => 1 + numInstructions p'
+    | SetToThen _ p' => 1 + numInstructions p'
+    end.
+
 
   Theorem numInstructions_Example :
     numInstructions (MulThen 5 (AddThen 2 Done)) = 2.
   Proof.
-  Admitted.
+    simpl. reflexivity.
+  Qed.
+
 
   (* Define [concatProg] such that [concatProg p1 p2] is the program
    * that first runs [p1] and then runs [p2].
    *)
-  Fixpoint concatProg (p1 p2 : Prog) : Prog.
-  Admitted.
+  Fixpoint concatProg (p1 p2 : Prog) : Prog :=
+    match p1 with
+    | Done => p2
+    | AddThen n p' => AddThen n (concatProg p' p2)
+    | MulThen n p' => MulThen n (concatProg p' p2)
+    | DivThen n p' => DivThen n (concatProg p' p2)
+    | VidThen n p' => VidThen n (concatProg p' p2)
+    | SetToThen n p' => SetToThen n (concatProg p' p2)
+    end.
 
   Theorem concatProg_Example :
        concatProg (AddThen 1 Done) (MulThen 2 Done)
        = AddThen 1 (MulThen 2 Done).
   Proof.
-  Admitted.
+    simpl.
+    reflexivity.
+  Qed.
 
   (* Prove that the number of instructions in the concatenation of
    * two programs is the sum of the number of instructions in each
@@ -191,7 +220,20 @@ Module Impl.
     : forall (p1 p2 : Prog), numInstructions (concatProg p1 p2)
                         = numInstructions p1 + numInstructions p2.
   Proof.
-  Admitted.
+    intros p1 p2.
+    induction p1 as [| n p1' IH | n p1' IH | n p1' IH | n p1' IH | n p1' IH].
+      simpl. reflexivity.
+    - (* Case: p1 = AddThen n p1' *)
+      simpl. rewrite IH. reflexivity.
+    - (* Case: p1 = MulThen n p1' *)
+      simpl. rewrite IH. reflexivity.
+    - (* Case: p1 = DivThen n p1' *)
+      simpl. rewrite IH. reflexivity.
+    - (* Case: p1 = VidThen n p1' *)
+      simpl. rewrite IH. reflexivity.
+    - (* Case: p1 = SetToThen n p1' *)
+      simpl. rewrite IH. reflexivity.
+  Qed.
 
   (* Prove that running the concatenation of [p1] with [p2] is
      equivalent to running [p1] and then running [p2] on the
