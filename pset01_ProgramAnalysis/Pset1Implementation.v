@@ -243,7 +243,15 @@ Module Impl.
       run (concatProg p1 p2) initState =
       run p2 (run p1 initState).
   Proof.
-  Admitted.
+    intros p1 p2.
+    induction p1 as [| n p1' IH | n p1' IH | n p1' IH | n p1' IH | n p1' IH].
+    - simpl. reflexivity.
+    - simpl. intros. rewrite IH. reflexivity.
+    - simpl. intros. rewrite IH. reflexivity.
+    - simpl. intros. rewrite IH. reflexivity.
+    - simpl. intros. rewrite IH. reflexivity.
+    - simpl. intros. rewrite IH. reflexivity.
+  Qed.
 
   (* Read this definition and understand how division by zero is handled. *)
   Fixpoint runPortable (p : Prog) (state : nat) : bool * nat :=
@@ -285,7 +293,86 @@ Module Impl.
   Lemma runPortable_run : forall p s0 s1,
     runPortable p s0 = (true, s1) -> run p s0 = s1.
   Proof.
-  Admitted.
+    (* We proceed by induction on the program p *)
+    induction p; intros s0 s1 H.
+    
+    - (* Case: Done *)
+      simpl in H.
+      inversion H.
+      reflexivity.
+  
+    - (* Case: AddThen n p *)
+      simpl in H.
+      destruct (runPortable p (n + s0)) eqn:Hp.
+      destruct b.
+      + (* Subcase: runPortable p (n + s0) = (true, s1) *)
+        simpl.
+        apply IHp.
+        rewrite <- H.
+        rewrite <- Hp.
+        f_equal.
+        apply Nat.add_comm.
+      + (* Subcase: runPortable p (n + s0) = (false, n0) *)
+        discriminate H.
+  
+    - (* Case: MulThen n p *)
+      simpl in H.
+      destruct (runPortable p (n * s0)) eqn:Hp.
+      destruct b.
+      + (* Subcase: runPortable p (n * s0) = (true, s1) *)
+        simpl.
+        apply IHp.
+        rewrite <- H.
+        rewrite <- Hp.
+        f_equal.
+        apply Nat.mul_comm.
+      + (* Subcase: runPortable p (n * s0) = (false, n0) *)
+        discriminate H.
+  
+    - (* Case: DivThen n p *)
+      simpl in H.
+      destruct (n ==n 0) eqn:Hn.
+      + (* Subcase: n == 0 *)
+        discriminate H.
+      + (* Subcase: n != 0 *)
+        destruct (runPortable p (s0 / n)) eqn:Hp.
+        destruct b.
+        * (* Sub-subcase: runPortable p (s0 / n) = (true, s1) *)
+          simpl.
+          apply IHp.
+          rewrite <- H.
+          assumption.
+        * (* Sub-subcase: runPortable p (s0 / n) = (false, n0) *)
+          discriminate H.
+  
+    - (* Case: VidThen n p *)
+      simpl in H.
+      destruct (s0 ==n 0) eqn:Hs.
+      + (* Subcase: s0 == 0 *)
+        discriminate H.
+      + (* Subcase: s0 != 0 *)
+        destruct (runPortable p (n / s0)) eqn:Hp.
+        destruct b.
+        * (* Sub-subcase: runPortable p (n / s0) = (true, s1) *)
+          simpl.
+          apply IHp.
+          rewrite <- H.
+          assumption.
+        * (* Sub-subcase: runPortable p (n / s0) = (false, n0) *)
+          discriminate H.
+  
+    - (* Case: SetToThen n p *)
+      simpl in H.
+      destruct (runPortable p n) eqn:Hp.
+      destruct b.
+      + (* Subcase: runPortable p n = (true, s1) *)
+        simpl.
+        apply IHp.
+        rewrite <- H.
+        assumption.
+      + (* Subcase: runPortable p n = (false, n0) *)
+        discriminate H.
+  Qed.
 
   (* The final goal of this pset is to implement [validate : Prog -> bool]
      such that if this function returns [true], the program would not trigger
