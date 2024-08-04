@@ -510,19 +510,28 @@ Module Impl.
   Proof.
     intros p.
     split; intros H.
-    - admit.
-    - induction p as [| n p' IH | n p' IH | n p' IH | n p' IH | n p' IH].
+    - (* validate' p true = true *)
+      admit.
+    - (* validate' p false = true *)
+      induction p as [| n p' IH | n p' IH | n p' IH | n p' IH | n p' IH].
       + (* Case: Done *)
         auto.
 
       + (* Case: AddThen n p' *) 
         intros s.
-        simpl.
-        rewrite Nat.add_comm.
         destruct (n ==n 0) eqn:Hn.
-        rewrite e in H.
-        simpl in H.
-        * apply IH. assumption.
+        * (* Subcase: n == 0 *)
+          rewrite e in H.
+          simpl in H.
+          simpl.
+          rewrite Nat.add_comm.
+          apply IH.
+          assumption.
+        * (* Subcase: n != 0 *)
+          simpl in H.
+          rewrite Hn in H.
+          apply IH.
+
 (* TODO *)
 
 (* Not workable below, 
