@@ -519,8 +519,10 @@ Module Impl.
         intros s.
         simpl.
         rewrite Nat.add_comm.
-        destruct (s ==n 0) eqn:Hs.
-        * apply IH. 
+        destruct (n ==n 0) eqn:Hn.
+        rewrite e in H.
+        simpl in H.
+        * apply IH. assumption.
 (* TODO *)
 
 (* Not workable below, 
