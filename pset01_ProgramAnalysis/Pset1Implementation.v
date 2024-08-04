@@ -406,28 +406,88 @@ Module Impl.
    * necessary, and only jump into coding when you have some idea why it should
    * succeed. Some may call Coq a video game, but it is not a grinding contest. *)
 
+  Fixpoint validate' (p : Prog) (nz: bool) : bool :=
+    match p with
+    | Done => true
+    | AddThen n p' => if n==n 0 then validate' p' nz else validate' p' true
+    | MulThen n p' => if n==n 0 then validate' p' false else validate' p' nz
+    | DivThen n p' => if n==n 0 then false else validate' p' nz 
+    | VidThen n p' => if nz then validate' p' nz else false
+    | SetToThen n p' => if n==n 0 then validate' p' false else validate' p' true
+    end.
 
-  Definition validate (p : Prog) : bool.
-  Admitted.
+  Definition validate (p : Prog) : bool :=
+    validate' p false.
+(*
+  Definition validate (p : Prog) : bool :=
+    let fix validate' (p : Prog) (nz: bool) : bool :=
+      match p with
+      | Done => true
+      | AddThen n p' => if n==n 0 then validate' p' nz else validate' p' true
+      | MulThen n p' => if n==n 0 then validate' p' false else validate' p' nz
+      | DivThen n p' => if n==n 0 then false else validate' p' nz 
+      | VidThen n p' => if nz then validate' p' nz else false
+      | SetToThen n p' => if n==n 0 then validate' p' false else validate' p' true
+      end
+    in validate' p false.
+*)
 
   (* Start by making sure that your solution passes the following tests, and add
    * at least one of your own tests: *)
 
-  Example validate1 : validate goodProgram1 = true. Admitted.
-  Example validate2 : validate goodProgram2 = true. Admitted.
-  Example validate3 : validate goodProgram3 = true. Admitted.
-  Example validate4 : validate goodProgram4 = true. Admitted.
-  Example validate5 : validate goodProgram5 = true. Admitted.
-  Example validate6 : validate goodProgram6 = true. Admitted.
-  Example validate7 : validate goodProgram7 = true. Admitted.
-  Example validateb1 : validate badProgram1 = false. Admitted.
-  Example validateb2 : validate badProgram2 = false. Admitted.
+  Example validate1 : validate goodProgram1 = true.
+  Proof.
+    simpl. reflexivity.
+  Qed.
+
+  Example validate2 : validate goodProgram2 = true.
+  Proof.
+    simpl. reflexivity.
+  Qed.
+  
+  Example validate3 : validate goodProgram3 = true. 
+  Proof.
+    simpl. reflexivity.
+  Qed.
+  
+  Example validate4 : validate goodProgram4 = true.
+  Proof.
+    simpl. reflexivity.
+  Qed.
+  
+  Example validate5 : validate goodProgram5 = true.
+  Proof.
+    simpl. reflexivity.
+  Qed.
+  
+  Example validate6 : validate goodProgram6 = true.
+  Proof.
+    simpl. reflexivity.
+  Qed.
+  
+  Example validate7 : validate goodProgram7 = true.
+  Proof.
+    simpl. reflexivity.
+  Qed.
+  
+  Example validateb1 : validate badProgram1 = false.
+  Proof.
+    simpl. reflexivity.
+  Qed.
+  
+  Example validateb2 : validate badProgram2 = false.
+  Proof.
+    simpl. reflexivity.
+  Qed.
 
   (* Then, add your own example of a bad program here, and check that `validate`
    * returns `false` on it: *)
 
-  Definition badProgram3 : Prog. Admitted.
-  Example validateb3 : validate badProgram3 = false. Admitted.
+  Definition badProgram3 : Prog := MulThen 0 (VidThen 5 Done). 
+  Example validateb3 : validate badProgram3 = false.
+  Proof.
+    simpl. reflexivity.
+  Qed.
 
 
 
@@ -442,11 +502,83 @@ Module Impl.
   (* [[Fill in your proof sketch here.]] *)
 
   (* Now you're ready to write the proof in Coq: *)
+  Lemma validate_sound' : forall p,
+    (validate' p true = true ->
+      forall s, s <> 0 -> runPortable p s = (true, run p s)) /\
+    (validate' p false = true ->
+       forall s, runPortable p s = (true, run p s)).
+  Proof.
+    intros p.
+    split; intros H.
+    - admit.
+    - induction p as [| n p' IH | n p' IH | n p' IH | n p' IH | n p' IH].
+      + (* Case: Done *)
+        auto.
 
+      + (* Case: AddThen n p' *) 
+        intros s.
+        simpl.
+        rewrite Nat.add_comm.
+        destruct (s ==n 0) eqn:Hs.
+        * apply IH. 
+(* TODO *)
+
+(* Not workable below, 
   Lemma validate_sound : forall p, validate p = true ->
     forall s, runPortable p s = (true, run p s).
-  Admitted.
+  Proof.
+    unfold validate.
+    intros p Hval.
+    induction p as [ | n p' IH | n p' IH | n p' IH | n p' IH | n p' IH ].
+    - (* Case: Done *)
+      simpl. reflexivity.
 
+    - (* Case: AddThen n p' *)
+      simpl in Hval. 
+      simpl.
+      intros s.
+      rewrite Nat.add_comm.
+      apply IH. 
+      apply Hval.
+
+    - (* Case: MulThen n p' *)
+      simpl in Hval.
+      simpl.
+      intros s.
+      rewrite Nat.mul_comm.
+      apply IH. 
+      apply Hval.
+
+    - (* Case: DivThen n p' *)
+      simpl in Hval.
+      simpl.
+      intros s.
+      destruct (n ==n 0) eqn:Hn.
+      + (* Subcase: n == 0 *)
+        discriminate Hval.
+      + (* Subcase: n != 0 *)
+        apply IH.
+        apply Hval.
+
+    - (* Case: VidThen n p' *)
+      simpl in Hval.
+      simpl.
+      intros s.
+      destruct (s ==n 0) eqn:Hs.
+      + (* Subcase: s == 0 *)
+        admit.
+      + (* Subcase: s != 0 *)
+        apply IH.
+        apply Hval.
+
+    - (* Case: SetToThen n p' *)
+      simpl in Hval.
+      intros s.
+      simpl.
+      apply IH.
+      apply Hval.
+  Admitted.
+*)
   (* Here is the complete list of commands used in one possible solution:
     - Search, for example Search (_ + 0).
     - induct, for example induct x
