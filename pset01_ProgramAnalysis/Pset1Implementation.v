@@ -148,8 +148,8 @@ Module Impl.
   Fixpoint run (p : Prog) (initState : nat) : nat :=
     match p with
     | Done => initState
-    | AddThen n p' => run p' (initState + n)
-    | MulThen n p' => run p' (initState * n)
+    | AddThen n p' => run p' (n + initState)
+    | MulThen n p' => run p' (n * initState)
     | DivThen n p' => run p' (initState / n)
     | VidThen n p' => run p' (n / initState)
     | SetToThen n p' => run p' n
@@ -311,7 +311,6 @@ Module Impl.
         rewrite <- H.
         rewrite <- Hp.
         f_equal.
-        apply Nat.add_comm.
       + (* Subcase: runPortable p (n + s0) = (false, n0) *)
         discriminate H.
   
@@ -325,7 +324,6 @@ Module Impl.
         rewrite <- H.
         rewrite <- Hp.
         f_equal.
-        apply Nat.mul_comm.
       + (* Subcase: runPortable p (n * s0) = (false, n0) *)
         discriminate H.
   
@@ -511,26 +509,52 @@ Module Impl.
     intros p.
     split; intros H.
     - (* validate' p true = true *)
-      admit.
+      induction p as [| n p' IH | n p' IH | n p' IH | n p' IH | n p' IH].
+      + (* Case: Done *)
+        auto.
+      + (* Case: AddThen n p' *)
+        intros s Hs. simpl in *.
+        cases (n ==n 0).
+        * (* Subcase: n == 0 *)
+          rewrite e. simpl.
+          apply IH.
+          -- assumption.
+          -- assumption.
+        * (* Subcase: n != 0 *)
+          simpl.
+          cases ((n+s) ==n 0).
+          -- linear_arithmetic.
+          -- apply IH.
+             assumption.
+             assumption.
+      + (* Case: MulThen n p' *) admit.
+      + (* Case: DivThen n p' *) admit.
+      + (* Case: VidThen n p' *) admit.
+      + (* Case: SetToThen n p' *) admit.
     - (* validate' p false = true *)
       induction p as [| n p' IH | n p' IH | n p' IH | n p' IH | n p' IH].
       + (* Case: Done *)
         auto.
 
       + (* Case: AddThen n p' *) 
-        intros s.
-        destruct (n ==n 0) eqn:Hn.
+        intros s. simpl in *.
+        cases (n ==n 0).
         * (* Subcase: n == 0 *)
-          rewrite e in H.
-          simpl in H.
-          simpl.
           rewrite Nat.add_comm.
           apply IH.
           assumption.
         * (* Subcase: n != 0 *)
+          simpl.
+          cases ((n+s) ==n 0).
+          -- linear_arithmetic.
+          -- unfold runPortable.
+          simpl in H.
+          simpl.
+          rewrite Hn in H. reflexivity.
+          propositional.
           simpl in H.
           rewrite Hn in H.
-          apply IH.
+          About cases.
 
 (* TODO *)
 
