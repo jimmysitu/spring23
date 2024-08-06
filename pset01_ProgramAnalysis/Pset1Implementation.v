@@ -241,7 +241,62 @@ Module Impl.
   Theorem concatProg_run
     : forall (p1 p2 : Prog) (initState : nat),
       run (concatProg p1 p2) initState =
-      run p2 (run p1 initState).
+      run p2 (run p1 initState)(* Not workable below, 
+      Lemma validate_sound : forall p, validate p = true ->
+        forall s, runPortable p s = (true, run p s).
+      Proof.
+        unfold validate.
+        intros p Hval.
+        induction p as [ | n p' IH | n p' IH | n p' IH | n p' IH | n p' IH ].
+        - (* Case: Done *)
+          simpl. reflexivity.
+    
+        - (* Case: AddThen n p' *)
+          simpl in Hval. 
+          simpl.
+          intros s.
+          rewrite Nat.add_comm.
+          apply IH. 
+          apply Hval.
+    
+        - (* Case: MulThen n p' *)
+          simpl in Hval.
+          simpl.
+          intros s.
+          rewrite Nat.mul_comm.
+          apply IH. 
+          apply Hval.
+    
+        - (* Case: DivThen n p' *)
+          simpl in Hval.
+          simpl.
+          intros s.
+          destruct (n ==n 0) eqn:Hn.
+          + (* Subcase: n == 0 *)
+            discriminate Hval.
+          + (* Subcase: n != 0 *)
+            apply IH.
+            apply Hval.
+    
+        - (* Case: VidThen n p' *)
+          simpl in Hval.
+          simpl.
+          intros s.
+          destruct (s ==n 0) eqn:Hs.
+          + (* Subcase: s == 0 *)
+            admit.
+          + (* Subcase: s != 0 *)
+            apply IH.
+            apply Hval.
+    
+        - (* Case: SetToThen n p' *)
+          simpl in Hval.
+          intros s.
+          simpl.
+          apply IH.
+          apply Hval.
+      Admitted.
+    *).
   Proof.
     intros p1 p2.
     induction p1 as [| n p1' IH | n p1' IH | n p1' IH | n p1' IH | n p1' IH].
@@ -409,8 +464,11 @@ Module Impl.
     | Done => true
     | AddThen n p' => if n==n 0 then validate' p' nz else validate' p' true
     | MulThen n p' => if n==n 0 then validate' p' false else validate' p' nz
-    | DivThen n p' => if n==n 0 then false else validate' p' nz 
-    | VidThen n p' => if nz then validate' p' nz else false
+    | DivThen n p' => if n==n 0 then false else 
+                        if n==n 1 then validate' p' nz else validate' p' nz
+    | VidThen n p' => if nz then 
+                        if n==n 0 then validate' p' true else validate' p' false
+                      else false
     | SetToThen n p' => if n==n 0 then validate' p' false else validate' p' true
     end.
 
@@ -506,114 +564,65 @@ Module Impl.
     (validate' p false = true ->
        forall s, runPortable p s = (true, run p s)).
   Proof.
-    intros p.
-    split; intros H.
-    - (* validate' p true = true *)
-      induction p as [| n p' IH | n p' IH | n p' IH | n p' IH | n p' IH].
-      + (* Case: Done *)
-        auto.
-      + (* Case: AddThen n p' *)
-        intros s Hs. simpl in *.
-        cases (n ==n 0).
-        * (* Subcase: n == 0 *)
-          rewrite e. simpl.
-          apply IH.
-          -- assumption.
-          -- assumption.
-        * (* Subcase: n != 0 *)
-          simpl.
-          cases ((n+s) ==n 0).
-          -- linear_arithmetic.
-          -- apply IH.
-             assumption.
-             assumption.
-      + (* Case: MulThen n p' *) admit.
-      + (* Case: DivThen n p' *) admit.
-      + (* Case: VidThen n p' *) admit.
-      + (* Case: SetToThen n p' *) admit.
-    - (* validate' p false = true *)
-      induction p as [| n p' IH | n p' IH | n p' IH | n p' IH | n p' IH].
-      + (* Case: Done *)
-        auto.
-
-      + (* Case: AddThen n p' *) 
-        intros s. simpl in *.
-        cases (n ==n 0).
-        * (* Subcase: n == 0 *)
-          rewrite Nat.add_comm.
-          apply IH.
-          assumption.
-        * (* Subcase: n != 0 *)
-          simpl.
-          cases ((n+s) ==n 0).
-          -- linear_arithmetic.
-          -- unfold runPortable.
-          simpl in H.
-          simpl.
-          rewrite Hn in H. reflexivity.
-          propositional.
-          simpl in H.
-          rewrite Hn in H.
-          About cases.
-
-(* TODO *)
-
-(* Not workable below, 
-  Lemma validate_sound : forall p, validate p = true ->
-    forall s, runPortable p s = (true, run p s).
-  Proof.
-    unfold validate.
-    intros p Hval.
-    induction p as [ | n p' IH | n p' IH | n p' IH | n p' IH | n p' IH ].
-    - (* Case: Done *)
+    induction p; split; intros H.
+    - (* Done, nz= true *)
       simpl. reflexivity.
+    - (* Done, nz= false *)
+       simpl. reflexivity.
+    - (* AddThen, nz= true *)
+      simpl in H.
+      intros s. simpl.
+      cases (n ==n 0).
+      + propositional.
+        apply H3.
+        linear_arithmetic.
+      + propositional.
+        apply H3.
+        linear_arithmetic.
+    - (* AddThen, nz= false *)
+      simpl in H.
+      intros s. simpl.
+      cases (n ==n 0).
+      + propositional.
+        apply H2.
+      + propositional.
+        apply H2.
+        linear_arithmetic.
+    - (* MulThen, nz= true *)
+      simpl in H.
+      intros s. simpl.
+      cases (n ==n 0).
+      + propositional.
+        apply H3.
+      + propositional.
+        apply H3.
+        linear_arithmetic.
+    - (* MulThen, nz= false *)
+      simpl in H.
+      intros s. simpl.
+      cases (n ==n 0).
+      + propositional.
+        apply H2.
+      + propositional.
+        apply H2.
+    - (* DivThen, nz= true *)
+      simpl in H.
+      intros s. simpl.
+      cases (n ==n 0).
+      + discriminate H.
+      + propositional.
+        cases ( n ==n 1).
+        * apply H1.
+          -- assumption. 
+          -- 
+        * apply H3. 
+          rewrite e.
+          rewrite Nat.div_1_r.
+          assumption.
+        * apply H2
+        .
 
-    - (* Case: AddThen n p' *)
-      simpl in Hval. 
-      simpl.
-      intros s.
-      rewrite Nat.add_comm.
-      apply IH. 
-      apply Hval.
 
-    - (* Case: MulThen n p' *)
-      simpl in Hval.
-      simpl.
-      intros s.
-      rewrite Nat.mul_comm.
-      apply IH. 
-      apply Hval.
-
-    - (* Case: DivThen n p' *)
-      simpl in Hval.
-      simpl.
-      intros s.
-      destruct (n ==n 0) eqn:Hn.
-      + (* Subcase: n == 0 *)
-        discriminate Hval.
-      + (* Subcase: n != 0 *)
-        apply IH.
-        apply Hval.
-
-    - (* Case: VidThen n p' *)
-      simpl in Hval.
-      simpl.
-      intros s.
-      destruct (s ==n 0) eqn:Hs.
-      + (* Subcase: s == 0 *)
-        admit.
-      + (* Subcase: s != 0 *)
-        apply IH.
-        apply Hval.
-
-    - (* Case: SetToThen n p' *)
-      simpl in Hval.
-      intros s.
-      simpl.
-      apply IH.
-      apply Hval.
-  Admitted.
-*)
   (* Here is the complete list of commands used in one possible solution:
     - Search, for example Search (_ + 0).
     - induct, for example induct x
