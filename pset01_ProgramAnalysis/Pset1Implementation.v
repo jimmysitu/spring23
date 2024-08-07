@@ -465,7 +465,7 @@ Module Impl.
     | AddThen n p' => if n==n 0 then validate' p' nz else validate' p' true
     | MulThen n p' => if n==n 0 then validate' p' false else validate' p' nz
     | DivThen n p' => if n==n 0 then false else 
-                        if n==n 1 then validate' p' nz else validate' p' nz
+                        if n==n 1 then validate' p' nz else validate' p' false
     | VidThen n p' => if nz then 
                         if n==n 0 then validate' p' true else validate' p' false
                       else false
@@ -523,6 +523,7 @@ Module Impl.
   
   Example validate7 : validate goodProgram7 = true.
   Proof.
+    Print goodProgram7.
     simpl. reflexivity.
   Qed.
   
@@ -564,13 +565,14 @@ Module Impl.
     (validate' p false = true ->
        forall s, runPortable p s = (true, run p s)).
   Proof.
-    induction p; split; intros H.
+    intros p.
+    induction p; split.
     - (* Done, nz= true *)
       simpl. reflexivity.
     - (* Done, nz= false *)
        simpl. reflexivity.
     - (* AddThen, nz= true *)
-      simpl in H.
+      intros H. simpl in H.
       intros s. simpl.
       cases (n ==n 0).
       + propositional.
@@ -580,7 +582,7 @@ Module Impl.
         apply H3.
         linear_arithmetic.
     - (* AddThen, nz= false *)
-      simpl in H.
+      intros H. simpl in H.
       intros s. simpl.
       cases (n ==n 0).
       + propositional.
@@ -589,7 +591,7 @@ Module Impl.
         apply H2.
         linear_arithmetic.
     - (* MulThen, nz= true *)
-      simpl in H.
+      intros H. simpl in H.
       intros s. simpl.
       cases (n ==n 0).
       + propositional.
@@ -598,7 +600,7 @@ Module Impl.
         apply H3.
         linear_arithmetic.
     - (* MulThen, nz= false *)
-      simpl in H.
+      intros H. simpl in H.
       intros s. simpl.
       cases (n ==n 0).
       + propositional.
@@ -606,21 +608,35 @@ Module Impl.
       + propositional.
         apply H2.
     - (* DivThen, nz= true *)
+      intros H. 
       simpl in H.
       intros s. simpl.
       cases (n ==n 0).
       + discriminate H.
-      + propositional.
-        cases ( n ==n 1).
-        * apply H1.
-          -- assumption. 
-          -- 
-        * apply H3. 
-          rewrite e.
+      + destruct IHp. 
+        cases ( n==n 1).
+        * rewrite e.
           rewrite Nat.div_1_r.
+          intros Hs. apply H0.
+          -- assumption.
+          -- assumption. 
+        * intros Hs.
+          apply H1.
           assumption.
-        * apply H2
-        .
+    - (* DivThen, nz= false *)
+      intros H. simpl in H.
+      intros s. simpl.
+      cases (n ==n 0).
+      + discriminate H.
+      + destruct IHp. 
+        cases ( n==n 1).
+        * rewrite e.
+          rewrite Nat.div_1_r.
+          apply H1.
+          assumption.
+        * apply H1.
+          assumption.
+    - (* VidThen, nz= true *)
 
 
   (* Here is the complete list of commands used in one possible solution:
