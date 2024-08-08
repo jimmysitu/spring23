@@ -467,7 +467,7 @@ Module Impl.
     | DivThen n p' => if n==n 0 then false else 
                         if n==n 1 then validate' p' nz else validate' p' false
     | VidThen n p' => if nz then 
-                        if n==n 0 then validate' p' true else validate' p' false
+                        if n==n 0 then validate' p' false else validate' p' false
                       else false
     | SetToThen n p' => if n==n 0 then validate' p' false else validate' p' true
     end.
@@ -637,6 +637,55 @@ Module Impl.
         * apply H1.
           assumption.
     - (* VidThen, nz= true *)
+      intros H. simpl in H.
+      intros s. simpl. 
+      cases (s ==n 0).
+      + intros Hs. linear_arithmetic.
+      + intros Hs.
+        cases (n ==n 0).
+        * rewrite e. rewrite Nat.div_0_l.
+          destruct IHp.
+          -- apply H1.
+             assumption.
+          -- assumption.
+
+        * destruct IHp.
+          apply H1.
+          assumption.
+    - (* VidThen, nz= false *)
+      intros H. simpl in H.
+      discriminate H.
+    - (* SetToThen, nz= true *)
+      intros H. simpl in H.
+      intros s. simpl.
+      intros Hs.
+      destruct IHp.
+      cases (n ==n 0).
+      + apply H1.
+        assumption. 
+      + apply H0.
+        assumption.
+        assumption.
+    - (* SetToThen, nz= false *)
+      intros H. simpl in H.
+      intros s. simpl.
+      destruct IHp.
+      cases (n ==n 0).
+      + apply H1.
+        assumption. 
+      + apply H0.
+        assumption.
+        assumption.
+  Qed.
+
+  Lemma validate_sound : forall p, validate p = true ->
+    forall s, runPortable p s = (true, run p s).
+  Proof.
+    unfold validate.
+    intros p H.
+    apply validate_sound'.
+    assumption.
+  Qed.
 
 
   (* Here is the complete list of commands used in one possible solution:
