@@ -274,8 +274,17 @@ Module Impl.
   (* Exercise: Prove that if the index is out of bounds, "ith" returns 0. *)
   Lemma ith_out_of_bounds_0: forall i l, len l <= i -> ith i l = 0.
   Proof.
-  Admitted.
-
+    induct i; simplify. 
+    - destruct l.
+      + equality.
+      + simpl in H. linear_arithmetic.
+    - unfold_recurse ith i.
+      + destruct l.
+        * equality.
+        * rewrite IHi.
+          -- equality.
+          -- simpl in H. linear_arithmetic.
+  Qed.
 
   (* Binomial coefficients *)
   (* ********************* *)
