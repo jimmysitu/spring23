@@ -382,15 +382,45 @@ Module Impl.
 
   Lemma fact_nonzero: forall n, n! <> 0.
   Proof.
-  Admitted.
+    induct n.
+    - simpl. linear_arithmetic.
+    - unfold_recurse fact (n).
+      Search (_ * _ <> 0).
+      apply N.neq_mul_0.
+      split.
+      + linear_arithmetic.
+      + assumption.
+  Qed.
 
   Lemma Cn0: forall n, C n 0 = 1.
   Proof.
-  Admitted.
+    induct n.
+    - unfold C. 
+      auto.
+    - unfold C.
+      Search (_ - 0).
+      rewrite N.sub_0_r.
+      simplify.
+      Search (_ * 1).
+      rewrite N.mul_1_r.
+      apply N.div_same.
+      apply fact_nonzero.
+  Qed.
+      
 
   Lemma Cnn: forall n, C n n = 1.
   Proof.
-  Admitted.
+    induct n.
+    - unfold C.
+      auto.
+    - unfold C. 
+      Search (?x - ?x).
+      rewrite N.sub_diag. 
+      simplify.
+      rewrite N.mul_1_l.
+      apply N.div_same.
+      apply fact_nonzero.
+  Qed.
 
 
   (* It's somewhat surprising that in the definition of C(n, k),
