@@ -559,6 +559,40 @@ Module Impl.
   Lemma bcoeff_correct: forall n k, k <= n -> bcoeff n k = C n k.
   Proof.
     induct k; simplify.
+    - rewrite Cn0. equality.
+
+    - unfold C.
+      Search (_ - (_ + _)).
+      rewrite N.sub_add_distr.
+      unfold_recurse fact k.
+      Search ( _ / _ ).
+      rewrite <- N.div_mul_cancel_r with (c := (n-k)).
+
+      + replace (n - k) with (n-k-1+1) at 3 by linear_arithmetic.
+        rewrite N.mul_assoc.
+        Search (?x * ?y = ?y * ?x).
+        rewrite N.mul_comm with (m := n-k-1+1).
+        
+        assert(Hnk: (n-k-1+1)*(n-k-1)! = (n-k-1+1)!).
+        * unfold_recurse fact (n-k-1).
+          linear_arithmetic.
+        * 
+          rewrite N.mul_assoc with (n := (n-k-1+1)).
+          rewrite N.mul_assoc with (n := (n-k-1+1)).
+          rewrite Hnk.
+          Search (_ - ?x + ?x).
+          rewrite N.sub_add; cycle 1.
+          { linear_arithmetic. }
+          {
+            rewrite N.mul_comm with (m := k!).
+            Search( _ / (_ * _)).
+
+          }
+
+
+
+
+
   Admitted.
 
 
