@@ -561,7 +561,8 @@ Module Impl.
     induct k; simplify.
     - rewrite Cn0. equality.
 
-    - unfold C.
+    - 
+      unfold C.
       Search (_ - (_ + _)).
       rewrite N.sub_add_distr.
       unfold_recurse fact k.
@@ -585,9 +586,16 @@ Module Impl.
           { linear_arithmetic. }
           {
             rewrite N.mul_comm with (m := k!).
+            rewrite N.mul_assoc.
             Search( _ / (_ * _)).
-
+            rewrite <- N.div_div; cycle 1.
+            - Search ( _ * _  <> 0).
+              apply N.neq_mul_0.
+              split; apply fact_nonzero.
+            - linear_arithmetic.
+            - Search (_ * _ / _).
           }
+
 
 
 
