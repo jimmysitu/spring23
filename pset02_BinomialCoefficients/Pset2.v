@@ -594,14 +594,35 @@ Module Impl.
               split; apply fact_nonzero.
             - linear_arithmetic.
             - Search (_ * _ / _).
+              rewrite N.mul_comm with (n := n!).
+              rewrite N.divide_div_mul_exact; cycle 1.
+              * apply N.neq_mul_0.
+                split; apply fact_nonzero.
+              * rewrite N.mul_comm.
+                apply C_is_integer.
+                linear_arithmetic.
+              * assert (HCnk: C n k = (n! / ((n-k)!*k!))).
+                {
+                  unfold C. equality.
+                }
+                {
+                  rewrite N.mul_comm with (n := k!).
+                  rewrite <- HCnk.
+                  unfold_recurse (bcoeff n) k.
+                  rewrite IHk.
+                  rewrite N.mul_comm. linear_arithmetic.
+                  nia.
+                }
           }
-
-
-
-
-
-
-  Admitted.
+      + apply N.neq_mul_0. 
+        split.
+        apply fact_nonzero.
+        apply N.neq_mul_0.
+        split.
+        * linear_arithmetic.
+        * apply fact_nonzero.
+      + nia.
+  Qed.  
 
 
   (* All binomial coefficients for a given n *)
