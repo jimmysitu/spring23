@@ -721,7 +721,77 @@ Module Impl.
       k <= n ->
       ith k (all_coeffs_fast n) = C n k.
   Proof.
-  Admitted.
+    assert (Hln: forall n', len (all_coeffs_fast n') = n'+1).
+    {
+      induct n'.
+      - simplify. linear_arithmetic.
+      - unfold_recurse all_coeffs_fast n'.
+        simplify.
+        rewrite IHn'.
+        rewrite seq_len.
+        linear_arithmetic.
+    }
+    intros Hp n.
+    induct n.
+    - simplify.
+      Search (_ <= 0).
+      rewrite N.le_0_r in H.
+      rewrite H.
+      simplify.
+      rewrite Cn0.
+      equality.
+    - simplify.
+      assert (k = 0 \/ k = n + 1 \/ 0 < k <= n) as Hk by linear_arithmetic;
+      cases Hk; subst; simplify.
+      + (* k = 0 *)
+        unfold_recurse all_coeffs_fast n.
+        rewrite Cn0. equality.
+      + (* k = n+1 *)
+        unfold_recurse all_coeffs_fast n.
+        unfold_recurse ith n.
+        simplify. 
+        rewrite seq_spec.
+        rewrite N.add_comm with (n:=1).
+        Search (_ + ?x -?x).
+        rewrite N.add_sub. 
+        rewrite IHn.
+        * rewrite ith_out_of_bounds_0.
+          {
+            rewrite Cnn.
+            rewrite Cnn.
+            linear_arithmetic.
+          }
+          {
+            rewrite Hln.
+            nia.
+          }
+        * nia.
+        * rewrite Hln.
+          nia.
+
+      + (* 0 < k <= n *)
+        unfold_recurse all_coeffs_fast n.
+        replace k with (k-1+1) by linear_arithmetic.
+        unfold_recurse ith (k-1).
+        simplify.
+        rewrite seq_spec.
+        * rewrite N.add_comm with (n:=1). 
+          rewrite N.sub_add.
+          {
+            rewrite IHn.
+            - rewrite IHn.
+              + rewrite Hp.
+                equality.
+                nia.
+              + nia.
+            - nia.
+          }
+          { 
+            nia.
+          }
+        * rewrite Hln.
+          nia.
+  Qed.
 
   (* ----- THIS IS THE END OF PSET2 ----- All exercises below this line are optional. *)
 
