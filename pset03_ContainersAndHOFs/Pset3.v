@@ -66,17 +66,35 @@ Module Impl.
   Lemma compose_id_l : forall A B (f: A -> B),
       id ∘ f = f.
   Proof.
-  Admitted.
+      intros.
+      apply fun_ext.
+      unfold compose.
+      intros x.
+      unfold id.
+      equality.
+  Qed.
 
   Lemma compose_id_r : forall A B (f: A -> B),
       f ∘ id = f.
   Proof.
-  Admitted.
+      intros.
+      apply fun_ext.
+      unfold compose.
+      intro x.
+      unfold id.
+      equality.
+   Qed.
+
 
   Lemma compose_assoc : forall A B C D (f: A -> B) (g: B -> C) (h: C -> D),
       h ∘ (g ∘ f) = h ∘ g ∘ f.
   Proof.
-  Admitted.
+      intros.
+      apply fun_ext.
+      unfold compose.
+      intros x.
+      equality.
+   Qed.
 
   (* The selfCompose function takes a function and applies this function n times
      to the argument. There are different ways of defining it, but let's
@@ -96,14 +114,15 @@ Module Impl.
      saying "to raise [base] to the power [e], apply the function that multiplies
      its argument by [base] to [1] [e] times".
      Define [exp] using [selfCompose] and [Nat.mul]. *)
-  Definition exp(base e: nat): nat. Admitted.
+  Definition exp(base e: nat): nat := 
+      selfCompose (Nat.mul base) e 1.
 
   (* Once you define [exp], you can replace [Admitted.] below by [Proof. equality. Qed.] *)
-  Lemma test_exp_2_3: exp 2 3 = 8. Admitted.
-  Lemma test_exp_3_2: exp 3 2 = 9. Admitted.
-  Lemma test_exp_4_1: exp 4 1 = 4. Admitted.
-  Lemma test_exp_5_0: exp 5 0 = 1. Admitted.
-  Lemma test_exp_1_3: exp 1 3 = 1. Admitted.
+  Lemma test_exp_2_3: exp 2 3 = 8. Proof. equality. Qed.
+  Lemma test_exp_3_2: exp 3 2 = 9. Proof. equality. Qed.
+  Lemma test_exp_4_1: exp 4 1 = 4. Proof. equality. Qed.
+  Lemma test_exp_5_0: exp 5 0 = 1. Proof. equality. Qed.
+  Lemma test_exp_1_3: exp 1 3 = 1. Proof. equality. Qed.
 
   (* And here's another example to illustrate [selfCompose]. Make sure you understand
      why its result is 256. *)
@@ -119,7 +138,15 @@ Module Impl.
      is the left inverse of the function that adds two to its argument. *)
   Example plus2minus2: left_inverse (fun (x: nat) => x + 2) (fun (x: nat) => x - 2).
   Proof.
-  Admitted.
+    unfold left_inverse.
+    unfold compose.
+    Search (_ + ?x - ?x).
+    unfold id.
+    apply fun_ext.
+    intros x.
+    rewrite Nat.add_sub.
+    equality.
+  Qed.
 
   (* On the other hand, note that the other direction does not hold, because
      if a subtraction on natural numbers underflows, it just returns 0, so
@@ -127,7 +154,20 @@ Module Impl.
      so it can't have a left inverse. *)
   Example minus2plus2: ~ left_inverse (fun (x: nat) => x - 2) (fun (x: nat) => x + 2).
   Proof.
-  Admitted.
+    unfold left_inverse.
+    intros H.
+    assert (H0: ((fun x => x+2) ∘ (fun x => x- 2)) 0 = id 0).
+    {
+     rewrite H. equality.
+    }
+    unfold compose in H0.
+    unfold id in H0.
+    Search (0 - _).
+    rewrite Nat.sub_0_l in H0.
+    simpl in H0.
+    discriminate H0.
+  Qed.
+
 
   (* Let us make the intuition from the previous paragraph more
      concrete, by proving that a function that is not injective
@@ -140,7 +180,23 @@ Module Impl.
       left_inverse f g ->
       (forall x y, f x = f y -> x = y).
   Proof.
-  Admitted.
+    intros f g H x y Hfxfy.
+    unfold left_inverse in H.
+    assert (H1: g (f x) = g (f y)).
+    {
+      rewrite Hfxfy. equality.
+    }
+
+   assert (H2: (g ∘ f) x = (g ∘ f) y).
+   {
+     unfold compose. 
+     assumption.
+   }
+
+   rewrite H in H2.
+   unfold id in H2.
+   assumption.
+  Qed.
 
   (* Bonus question (no points): can you prove the reverse;
      i.e., can you prove that all injective functions have left
@@ -151,7 +207,12 @@ Module Impl.
      type arguments explicitly, because otherwise Coq would not be able to infer them." *)
   Lemma left_inverse_id: forall A, left_inverse (@id A) (@id A).
   Proof.
-  Admitted.
+    intros.
+    unfold left_inverse.
+    unfold compose.
+    unfold id.
+    equality.
+  Qed.
 
 
   (* Now we can start proving interesting facts about inverse functions: *)
@@ -161,7 +222,33 @@ Module Impl.
       left_inverse f g ->
       left_inverse (selfCompose f n) (selfCompose g n).
   Proof.
-  Admitted.
+    unfold left_inverse.
+    induct n.
+    - simplify. apply left_inverse_id.
+    - simplify.
+ 
+    assert (Hg: forall n': nat, g ∘ selfCompose g n' = selfCompose g n' ∘ g).
+    {
+      induct n'.
+      - simplify.
+        rewrite compose_id_l.
+        rewrite compose_id_r.
+        equality.
+      - simplify.
+        rewrite IHn' at 1.
+        auto.
+    }
+
+    rewrite Hg.
+    Search ( _∘ _ ∘ _).
+    rewrite compose_assoc. 
+    rewrite <- compose_assoc with (h := selfCompose g n).
+    rewrite H.
+    rewrite compose_id_r.
+    apply IHn.
+    assumption.
+  Qed.
+  
 
   (** ** Polymorphic container types *)
 
