@@ -66,35 +66,17 @@ Module Impl.
   Lemma compose_id_l : forall A B (f: A -> B),
       id ∘ f = f.
   Proof.
-      intros.
-      apply fun_ext.
-      unfold compose.
-      intros x.
-      unfold id.
-      equality.
-  Qed.
+  Admitted.
 
   Lemma compose_id_r : forall A B (f: A -> B),
       f ∘ id = f.
   Proof.
-      intros.
-      apply fun_ext.
-      unfold compose.
-      intro x.
-      unfold id.
-      equality.
-   Qed.
-
+  Admitted.
 
   Lemma compose_assoc : forall A B C D (f: A -> B) (g: B -> C) (h: C -> D),
       h ∘ (g ∘ f) = h ∘ g ∘ f.
   Proof.
-      intros.
-      apply fun_ext.
-      unfold compose.
-      intros x.
-      equality.
-   Qed.
+  Admitted.
 
   (* The selfCompose function takes a function and applies this function n times
      to the argument. There are different ways of defining it, but let's
@@ -114,15 +96,14 @@ Module Impl.
      saying "to raise [base] to the power [e], apply the function that multiplies
      its argument by [base] to [1] [e] times".
      Define [exp] using [selfCompose] and [Nat.mul]. *)
-  Definition exp(base e: nat): nat := 
-      selfCompose (Nat.mul base) e 1.
+  Definition exp(base e: nat): nat. Admitted.
 
   (* Once you define [exp], you can replace [Admitted.] below by [Proof. equality. Qed.] *)
-  Lemma test_exp_2_3: exp 2 3 = 8. Proof. equality. Qed.
-  Lemma test_exp_3_2: exp 3 2 = 9. Proof. equality. Qed.
-  Lemma test_exp_4_1: exp 4 1 = 4. Proof. equality. Qed.
-  Lemma test_exp_5_0: exp 5 0 = 1. Proof. equality. Qed.
-  Lemma test_exp_1_3: exp 1 3 = 1. Proof. equality. Qed.
+  Lemma test_exp_2_3: exp 2 3 = 8. Admitted.
+  Lemma test_exp_3_2: exp 3 2 = 9. Admitted.
+  Lemma test_exp_4_1: exp 4 1 = 4. Admitted.
+  Lemma test_exp_5_0: exp 5 0 = 1. Admitted.
+  Lemma test_exp_1_3: exp 1 3 = 1. Admitted.
 
   (* And here's another example to illustrate [selfCompose]. Make sure you understand
      why its result is 256. *)
@@ -138,15 +119,7 @@ Module Impl.
      is the left inverse of the function that adds two to its argument. *)
   Example plus2minus2: left_inverse (fun (x: nat) => x + 2) (fun (x: nat) => x - 2).
   Proof.
-    unfold left_inverse.
-    unfold compose.
-    Search (_ + ?x - ?x).
-    unfold id.
-    apply fun_ext.
-    intros x.
-    rewrite Nat.add_sub.
-    equality.
-  Qed.
+  Admitted.
 
   (* On the other hand, note that the other direction does not hold, because
      if a subtraction on natural numbers underflows, it just returns 0, so
@@ -154,20 +127,7 @@ Module Impl.
      so it can't have a left inverse. *)
   Example minus2plus2: ~ left_inverse (fun (x: nat) => x - 2) (fun (x: nat) => x + 2).
   Proof.
-    unfold left_inverse.
-    intros H.
-    assert (H0: ((fun x => x+2) ∘ (fun x => x- 2)) 0 = id 0).
-    {
-     rewrite H. equality.
-    }
-    unfold compose in H0.
-    unfold id in H0.
-    Search (0 - _).
-    rewrite Nat.sub_0_l in H0.
-    simpl in H0.
-    discriminate H0.
-  Qed.
-
+  Admitted.
 
   (* Let us make the intuition from the previous paragraph more
      concrete, by proving that a function that is not injective
@@ -180,23 +140,7 @@ Module Impl.
       left_inverse f g ->
       (forall x y, f x = f y -> x = y).
   Proof.
-    intros f g H x y Hfxfy.
-    unfold left_inverse in H.
-    assert (H1: g (f x) = g (f y)).
-    {
-      rewrite Hfxfy. equality.
-    }
-
-   assert (H2: (g ∘ f) x = (g ∘ f) y).
-   {
-     unfold compose. 
-     assumption.
-   }
-
-   rewrite H in H2.
-   unfold id in H2.
-   assumption.
-  Qed.
+  Admitted.
 
   (* Bonus question (no points): can you prove the reverse;
      i.e., can you prove that all injective functions have left
@@ -207,12 +151,7 @@ Module Impl.
      type arguments explicitly, because otherwise Coq would not be able to infer them." *)
   Lemma left_inverse_id: forall A, left_inverse (@id A) (@id A).
   Proof.
-    intros.
-    unfold left_inverse.
-    unfold compose.
-    unfold id.
-    equality.
-  Qed.
+  Admitted.
 
 
   (* Now we can start proving interesting facts about inverse functions: *)
@@ -222,33 +161,7 @@ Module Impl.
       left_inverse f g ->
       left_inverse (selfCompose f n) (selfCompose g n).
   Proof.
-    unfold left_inverse.
-    induct n.
-    - simplify. apply left_inverse_id.
-    - simplify.
- 
-    assert (Hg: forall n': nat, g ∘ selfCompose g n' = selfCompose g n' ∘ g).
-    {
-      induct n'.
-      - simplify.
-        rewrite compose_id_l.
-        rewrite compose_id_r.
-        equality.
-      - simplify.
-        rewrite IHn' at 1.
-        auto.
-    }
-
-    rewrite Hg.
-    Search ( _∘ _ ∘ _).
-    rewrite compose_assoc. 
-    rewrite <- compose_assoc with (h := selfCompose g n).
-    rewrite H.
-    rewrite compose_id_r.
-    apply IHn.
-    assumption.
-  Qed.
-  
+  Admitted.
 
   (** ** Polymorphic container types *)
 
@@ -280,24 +193,36 @@ Module Impl.
   Definition bitwise_trie A := tree (option A).
 
   (* Define [lookup] such that [lookup k t] looks up the
-   * map entry corresponding to the key [k : list bool] in the
+    Fixpoint lookup {A} (k : list bool) (t : bitwise_trie A) {struct t} : option A :=
+    Admitted. * map entry corresponding to the key [k : list bool] in the
    * bitwise trie [t : bitwise_trie A].
    *
    * Look at the examples below to get a better sense of what
    * this operation does: the argument [k] is a path, in which
    * [true] means "go left" and [false] means "go right".
    *)
-  Fixpoint lookup {A} (k : list bool) (t : bitwise_trie A) {struct t} : option A. Admitted.
+  Fixpoint lookup {A} (k : list bool) (t : bitwise_trie A) {struct t} : option A :=
+    match t, k with
+    | Leaf, [] => None
+    | Leaf, _ => None
+    | Node l None r, [] => None
+    | Node l (Some v) r, [] => Some v
+    | Node l _ r, true::ks =>  lookup ks l
+    | Node l _ r, false::ks => lookup ks r
+    end.
+
 
   Example lookup_example1 : lookup [] (Node Leaf (None : option nat) Leaf) = None.
   Proof.
-  Admitted.
+    simplify. equality.
+  Qed.
 
   Example lookup_example2 : lookup [false; true]
       (Node (Node Leaf (Some 2) Leaf) None (Node (Node Leaf (Some 1) Leaf) (Some 3) Leaf))
                             = Some 1.
   Proof.
-  Admitted.
+    simplify. equality.
+  Qed.
 
   (* [Leaf] represents an empty bitwise trie, so a lookup for
    * any key should return [None].
@@ -305,7 +230,11 @@ Module Impl.
   Theorem lookup_empty {A} (k : list bool)
     : lookup k (Leaf : bitwise_trie A) = None.
   Proof.
-  Admitted.
+    simplify. 
+    case k.
+    - equality.
+    - equality. 
+  Qed.
 
   (* HINT 3 (see Pset3Sig.v) *)
 
