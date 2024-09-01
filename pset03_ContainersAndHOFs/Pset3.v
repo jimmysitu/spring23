@@ -419,26 +419,88 @@ Module Impl.
    * the tries once.
    *)
   
-  Fixpoint merge {A} (t1 t2 : bitwise_trie A) : bitwise_trie A. Admitted.    
+  Fixpoint merge {A} (t1 t2 : bitwise_trie A) : bitwise_trie A :=
+    match t1, t2 with
+    | Leaf, Leaf => Leaf
+    | Leaf, Node l v r => Node l v r
+    | Node l v r, Leaf => Node l v r
+    | Node l1 v1 r1, Node l2 None r2 =>
+        Node (merge l1 l2) v1 (merge r1 r2)
+    | Node l1 None r1, Node l2 v2 r2 =>
+        Node (merge l1 l2) v2 (merge r1 r2)
+    | Node l1 v1 r1, Node l2 v2 r2 =>
+        Node (merge l1 l2) v1 (merge r1 r2)
+    end.
   
 
   Lemma merge_example1 :
     merge (Node Leaf (Some 1) Leaf) (Node Leaf (Some 2) Leaf) =
     Node Leaf (Some 1) Leaf.
-  Proof. Admitted.
+  Proof.
+    simplify. equality.
+  Qed.
+
   Lemma merge_example2 :
     merge Leaf (Node Leaf (@None nat) Leaf) = Node Leaf None Leaf.
-  Proof. Admitted.
+  Proof.
+    simplify. equality.
+  Qed.
   Lemma merge_example3 :
     merge (Node Leaf None Leaf) (Node Leaf (Some 2) Leaf) =
     Node Leaf (Some 2) Leaf.
-  Proof. Admitted.
+  Proof.
+    simplify. equality.
+  Qed.
     
   Theorem left_lookup_merge {A} : forall (t1 t2 : bitwise_trie A) k v,
       lookup k t1 = Some v ->
       lookup k (merge t1 t2) = Some v.
+
   Proof.
-  Admitted.
+    induct t2.
+    - intros.
+      destruct t1.
+      + rewrite lookup_empty in H. discriminate H.
+      + simpl. destruct d.
+        * assumption.
+        * assumption.
+    - intros.
+      induct t1. 
+      + rewrite lookup_empty in H. discriminate H.
+      + simpl. destruct d.
+        * destruct d0.
+          destruct k.
+          simplify.
+          { assumption. }
+          { destruct b.
+            simplify.
+          }
+
+
+  Proof.
+    induct t1.
+    - intros.
+      rewrite lookup_empty in H.
+      discriminate H.
+    - intros.
+      induct t2.
+      + simpl. destruct d.
+        * apply H.
+        * apply H.
+      + simpl. destruct d.
+        * destruct k.
+          destruct d0. 
+          { simpl in H.
+            simpl.
+            assumption.
+          }
+          { simpl in H.
+            simpl. 
+            assumption.
+          }
+          {
+            destruct b.
+          }
 
   Theorem lookup_merge_None {A} : forall (t1 t2 : bitwise_trie A) k,
       lookup k (merge t1 t2) = None ->
