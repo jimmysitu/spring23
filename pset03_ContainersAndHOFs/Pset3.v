@@ -455,7 +455,6 @@ Module Impl.
   Theorem left_lookup_merge {A} : forall (t1 t2 : bitwise_trie A) k v,
       lookup k t1 = Some v ->
       lookup k (merge t1 t2) = Some v.
-
   Proof.
     induct t2.
     - intros.
@@ -465,17 +464,29 @@ Module Impl.
         * assumption.
         * assumption.
     - intros.
-      induct t1. 
-      + rewrite lookup_empty in H. discriminate H.
-      + simpl. destruct d.
-        * destruct d0.
-          destruct k.
-          simplify.
-          { assumption. }
-          { destruct b.
-            simplify.
+      destruct k.
+      + destruct t1.
+        * (* Case t1 is Leaf*)
+          rewrite lookup_empty in H. discriminate H.
+        * (* Case t1 is Node t1_1 d0 t1_2*)
+          simpl.
+          {
+            destruct d0; destruct d.
+            - simpl.
+              simpl in H. assumption.
+            - simpl.
+              simpl in H. assumption.
+            - simpl in H. discriminate.
+            - simpl in H. discriminate. 
           }
-
+      + destruct t1.
+        * (* Case t1 is Leaf*)
+          rewrite lookup_empty in H. discriminate H.
+        * (* Case t1 is Node t1_1 d0 t1_2*)
+          simpl.
+          {
+            destruct d0; destruct d.
+            - 
 
   Proof.
     induct t1.
