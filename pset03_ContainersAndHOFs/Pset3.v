@@ -456,62 +456,70 @@ Module Impl.
       lookup k t1 = Some v ->
       lookup k (merge t1 t2) = Some v.
   Proof.
-    induct t2.
-    - intros.
-      destruct t1.
+    intros.
+    generalize dependent t1.
+    generalize dependent k.
+    induction t2 as [ | l2 IHl2 v2 r2 IHr2]. 
+    - (* Case: t2 is Leaf *) 
+      intros.
+      destruct t1 as [ | l1 v1 r1].
       + rewrite lookup_empty in H. discriminate H.
-      + simpl. destruct d.
+      + simpl. destruct v1.
         * assumption.
         * assumption.
-    - intros.
-      destruct k.
-      + destruct t1.
-        * (* Case t1 is Leaf*)
-          rewrite lookup_empty in H. discriminate H.
-        * (* Case t1 is Node t1_1 d0 t1_2*)
-          simpl.
-          {
-            destruct d0; destruct d.
-            - simpl.
-              simpl in H. assumption.
-            - simpl.
-              simpl in H. assumption.
-            - simpl in H. discriminate.
-            - simpl in H. discriminate. 
+    - (* Case: t2 is Node l2 v2 r2 *)
+      intros.
+      destruct t1 as [ | l1 v1 r1].
+      + rewrite lookup_empty in H. discriminate H.
+      + simpl.
+        destruct v1.
+        * destruct v2.
+          { (*Case v1 is Some a, v2 is Some a *) 
+            destruct k.
+            * simpl. simpl in H. assumption.
+            * destruct b.
+              + simpl. simpl in H.
+                apply IHl2.
+                assumption.
+              + simpl. simpl in H.
+                apply IHr2.
+                assumption.
           }
-      + destruct t1.
-        * (* Case t1 is Leaf*)
-          rewrite lookup_empty in H. discriminate H.
-        * (* Case t1 is Node t1_1 d0 t1_2*)
-          simpl.
-          {
-            destruct d0; destruct d.
-            - 
-
-  Proof.
-    induct t1.
-    - intros.
-      rewrite lookup_empty in H.
-      discriminate H.
-    - intros.
-      induct t2.
-      + simpl. destruct d.
-        * apply H.
-        * apply H.
-      + simpl. destruct d.
-        * destruct k.
-          destruct d0. 
-          { simpl in H.
-            simpl.
-            assumption.
+          { (*Case v1 is Some a, v2 is None *)
+            destruct k.
+            * simpl. simpl in H. assumption.
+            * destruct b.
+              + simpl. simpl in H.
+                apply IHl2.
+                assumption.
+              + simpl. simpl in H.
+                apply IHr2.
+                assumption. 
           }
-          { simpl in H.
-            simpl. 
-            assumption.
+        * destruct v2.
+          { (*Case v1 is None, v2 is Some a *)
+            destruct k.
+            * simpl in H. discriminate H.
+            * destruct b.
+              + simpl. simpl in H.
+                apply IHl2.
+                assumption.
+              + simpl. simpl in H.
+                apply IHr2.
+                assumption. 
           }
-          {
-            destruct b.
+          { (*Case v1 is None, v2 is None *)
+            destruct k.
+            * simpl in H. discriminate H.
+            * destruct b.
+              + simpl. simpl in H.
+                apply IHl2.
+                assumption.
+              + simpl. simpl in H.
+                apply IHr2.
+                assumption.
           }
+    Qed.
 
   Theorem lookup_merge_None {A} : forall (t1 t2 : bitwise_trie A) k,
       lookup k (merge t1 t2) = None ->
