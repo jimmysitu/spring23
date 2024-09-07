@@ -525,15 +525,115 @@ Module Impl.
       lookup k (merge t1 t2) = None ->
       lookup k t1 = None /\ lookup k t2 = None.
   Proof.
-  Admitted.
-  
+    intros t1 t2 k H.
+    generalize dependent t2.
+    generalize dependent k.
+    induction t1 as [| l1 IHl1 v1 r1 IHr1]; intros k t2 H.
+    - (* Case: t1 is Leaf *)
+      simpl in H.
+      split.
+      + (* Subcase: lookup k t1 = None *)
+        rewrite lookup_empty. reflexivity.
+      + (* Subcase: lookup k t2 = None *)
+        destruct t2; simpl in H; assumption.
+    - (* Case: t1 is Node l1 v1 r1 *)
+      destruct t2 as [| l2 v2 r2].
+      + (* Subcase: t2 is Leaf *)
+        split.
+        * (* Subcase: lookup k t1 = None *)
+          simpl in H; destruct v1; assumption.
+        * (* Subcase: lookup k t2 = None *)
+          rewrite lookup_empty. reflexivity.
+      + (* Subcase: t2 is Node l2 v2 r2 *)
+        destruct k as [| b k'].
+        * (* Subcase: k is [] *)
+          destruct v1; destruct v2; simpl in H; try discriminate.
+          split; reflexivity.
+        * (* Subcase: k is b :: k' *)
+          destruct b.
+          -- (* Subcase: b is true *)
+            simpl. simpl in H. destruct v1; destruct v2.
+            ++ apply IHl1 in H.
+               assumption.
+            ++ apply IHl1 in H.
+               assumption.
+            ++ apply IHl1 in H.
+               assumption.
+            ++ apply IHl1 in H.
+               assumption.
+          -- (* Subcase: b is false *)
+            simpl. simpl in H. destruct v1; destruct v2.
+            ++ apply IHr1 in H.
+               assumption.
+            ++ apply IHr1 in H.
+               assumption.
+            ++ apply IHr1 in H.
+               assumption.
+            ++ apply IHr1 in H.
+               assumption.
+  Qed.
 
   (* HINT 5 (see Pset3Sig.v) *)
+  Lemma merge_id {A} : forall (t1 : bitwise_trie A),
+    merge t1 t1 = t1.
+  Proof.
+    intros t1.
+    induction t1 as [ | l1 IHl1 v1 r1 IHr1].
+    - (* Case: t1 is Leaf *)
+      reflexivity.
+    - (* Case: t1 is Node l1 v1 r1 *)
+      simpl. destruct v1.
+      + rewrite IHl1. rewrite IHr1. reflexivity.
+      + rewrite IHl1. rewrite IHr1. reflexivity.
+  Qed.
+
+  Lemma merge_idempotent {A} : forall (t1 t2 : bitwise_trie A),
+    merge t1 (merge t1 t2) = merge t1 t2.
+  Proof.
+    intros t1 t2.
+    generalize dependent t1.
+    induction t2 as [ | l2 IHl2 v2 r2 IHr2].
+    - (* Case: t2 is Leaf *)
+      intros. destruct t1.
+      + simpl. reflexivity.
+      + simpl. destruct d.
+        * rewrite merge_id. rewrite merge_id. reflexivity.
+        * rewrite merge_id. rewrite merge_id. reflexivity.
+    - (* Case: t2 is Node l2 v2 r2 *)
+      intros. simpl. destruct t1 as [ | l1 v1 r1].
+      + simpl. reflexivity.
+      + simpl. destruct v1.
+        * destruct v2.
+          { rewrite IHl2. rewrite IHr2. reflexivity. }
+          { rewrite IHl2. rewrite IHr2. reflexivity. }
+        * destruct v2.
+          { rewrite IHl2. rewrite IHr2. reflexivity. }
+          { rewrite IHl2. rewrite IHr2. reflexivity. }
+  Qed.
+
   Theorem merge_selfCompose {A} : forall n (t1 t2 : bitwise_trie A),
       0 < n ->
       selfCompose (merge t1) n t2 = merge t1 t2.
   Proof.
-  Admitted.
+    intros n t1 t2 H.
+    induction n as [| n' IH].
+    - (* Base case: n = 0 *)
+      exfalso. (* This case is impossible because 0 < n *)
+      inversion H.
+    - (* Inductive case: n = S n' *)
+      simpl.
+      destruct n'.
+      + (* Case: n' = 0 *)
+        simpl. reflexivity.
+      + (* Case: n' > 0 *)
+        intros. simpl. simpl in IH.
+        unfold compose.
+        unfold compose in IH.
+        rewrite IH.
+        * rewrite merge_idempotent.
+          reflexivity.
+        * linear_arithmetic.
+  Qed.
 
   (* Define an operation to "mirror" that takes a tree (not necessarily a 
    * trie) and returns the mirrored version of the tree.
@@ -545,22 +645,44 @@ Module Impl.
    * list resulting from the flattening of that same tree.
  *)
   
-   Fixpoint mirror {A} (t : tree A) : tree A. Admitted.     
+  Fixpoint mirror {A} (t : tree A) : tree A :=
+    match t with
+    | Leaf => Leaf
+    | Node l d r => Node (mirror r) d (mirror l)
+    end.     
 
   Example mirror_test1 :
     mirror (Node Leaf 1 (Node Leaf 2 (Node Leaf 3 Leaf))) =
     Node (Node (Node Leaf 3 Leaf) 2 Leaf) 1 Leaf.
-  Admitted.
+  Proof.
+    simplify. equality.
+  Qed.
   
   Theorem mirror_mirror_id {A} : forall (t : tree A),
       mirror (mirror t) = t.
   Proof.
-  Admitted.
+    intros t.
+    induction t as [ | l IHl d r IHr].
+    - (* Case: t is Leaf *)
+      reflexivity.
+    - (* Case: t is Node l d r *)
+      simpl. rewrite IHl. rewrite IHr. reflexivity.
+  Qed.
   
   Theorem flatten_mirror_rev {A} : forall (t : tree A),
       flatten (mirror t) = rev (flatten t).
   Proof.
-  Admitted.
+    intros t.
+    induction t as [ | l IHl d r IHr].
+    - (* Case: t is Leaf *)
+      reflexivity.
+    - (* Case: t is Node l d r *)
+      simpl. rewrite IHl. rewrite IHr.
+      rewrite rev_app_distr.
+      simpl.
+      rewrite <- app_assoc.
+      reflexivity.
+  Qed.
 
   (** ** HOFs on lists and trees **)
   
