@@ -45,7 +45,7 @@ Module Impl.
 
   (* Here are three simple properties of function composition.
      Together, these properties mean that functions with ∘ form
-     a “monoid”. *)
+     a "monoid". *)
 
   (* Hint: In the following, it might be helpful to use the following fact:
      If two functions return the same value for all inputs, they are the same. *)
@@ -692,13 +692,18 @@ Module Impl.
    * structure intact.
    *)
   Fixpoint tree_map {A B : Type} (f : A -> B) (t : tree A)
-    : tree B. Admitted.
+    : tree B :=
+    match t with
+    | Leaf => Leaf
+    | Node l d r => Node (tree_map f l) (f d) (tree_map f r)
+    end.
 
   Example tree_map_example :
     tree_map (fun x => x + 1) (Node (Node Leaf 1 Leaf) 2 (Node Leaf 3 (Node Leaf 4 Leaf)))
     = (Node (Node Leaf 2 Leaf) 3 (Node Leaf 4 (Node Leaf 5 Leaf))).
   Proof.
-  Admitted.
+    simplify. equality.
+  Qed.
 
   (* [tree_map_flatten] shows that [map]
    * and [tree_map] are related by the [flatten] function.
@@ -707,7 +712,14 @@ Module Impl.
   Theorem tree_map_flatten : forall {A B : Type} (f : A -> B) (t : tree A),
       flatten (tree_map f t) = map f (flatten t).
   Proof.
-  Admitted.
+    intros A B f t.
+    induction t as [ | l IHl d r IHr].
+    - (* Case: t is Leaf *)
+      reflexivity.
+    - (* Case: t is Node l d r *)
+      simpl. rewrite IHl. rewrite IHr.
+      rewrite map_app. reflexivity.
+  Qed.
 
   (* This function asserts that a predicate holds over all
      elements of a tree. *)
@@ -720,19 +732,31 @@ Module Impl.
   (* Define a similar function for the [exists] case; that is, define
      a function that asserts that a predicate holds for at least
      one value of a tree. *)
-  Fixpoint tree_exists {A} (P: A -> Prop) (tr: tree A) {struct tr} : Prop.
-  Admitted.
+  Fixpoint tree_exists {A} (P: A -> Prop) (tr: tree A) {struct tr} : Prop :=
+    match tr with
+    | Leaf => False
+    | Node l d r => tree_exists P l \/ P d \/ tree_exists P r
+    end.
 
   (* Two sanity checks for your function: *)
   Lemma tree_exists_Leaf {A} (P: A -> Prop):
     ~ tree_exists P Leaf.
   Proof.
-  Admitted.
+    simplify. auto.
+  Qed.
 
   Lemma tree_forall_exists {A} (P: A -> Prop):
     forall tr, tr <> Leaf -> tree_forall P tr -> tree_exists P tr.
   Proof.
-  Admitted.
+    intros tr H H0.
+    destruct tr as [ | l d r].
+    - exfalso. apply H. reflexivity.
+    - simpl. destruct l as [ | l' d' r'].
+      + simpl in H0. inversion H0. inversion H2.
+        right. left. assumption.
+      + simpl in H0. inversion H0. inversion H2.
+        right. left. assumption.
+  Qed.
 
   (* What does the following theorem mean? Write a short
      explanation below. *)
@@ -743,7 +767,27 @@ Module Impl.
           forall d, tree_exists (fun d' => d' = d) tr ->
                P d.
   Proof.
-  Admitted.
+    intros tr H_forall d H_exists.
+    induction tr as [ | l IHl d' r IHr].
+    - (* Base Case: Leaf *)
+      simpl in H_exists.
+      contradiction.
+    - (* Inductive Case: Node *)
+      simpl in H_exists.
+      destruct H_forall as [H_l [H_d' H_r]].
+      destruct H_exists as [H_el | [H_ed | H_er]].
+      + (* Case: d exists in the left subtree *)
+        apply IHl.
+        * apply H_l.
+        * exact H_el.
+      + (* Case: d is the current node's data *)
+        subst.
+        exact H_d'.
+      + (* Case: d exists in the right subtree *)
+        apply IHr.
+        * apply H_r.
+        * exact H_er.
+  Qed.
 
   (** ** Binary search trees **)
 
@@ -809,10 +853,49 @@ Module Impl.
   
 
   (* HINT 7 (see Pset3Sig.v) *)
+  Lemma tree_forall_implies:
+  forall tr (P Q: Z -> Prop),
+    tree_forall P tr ->
+    (forall x, P x -> Q x) ->
+    tree_forall Q tr.
+  Proof.
+    intros tr P Q H_forall H_implies.
+    induction tr as [ | l IHl d r IHr].
+    - (* Case: tr is Leaf *)
+      simpl. linear_arithmetic.
+    - (* Case: tr is Node l d r *)
+      simpl.
+      split.
+      + apply IHl. apply H_forall.
+      + split.
+        * apply H_implies. apply H_forall.
+        * apply IHr. apply H_forall.
+  Qed.
+
   Lemma bst_implies:
     forall tr s, bst tr s -> tree_forall s tr.
   Proof.
-  Admitted.
+    intros tr.
+    induction tr as [ | l IHl d r IHr].
+    - (* Case: Leaf *)
+      simpl. constructor.
+    - (* Case: Node l d r *)
+      simpl.
+      intros s H.
+      destruct H as [H_d [H_l H_r]].
+      split.
+      + (* Prove tree_forall s l *)
+          apply tree_forall_implies with (P := fun x => s x /\ x < d).
+          -- apply IHl. apply H_l.
+          -- intros x [s_x _]. assumption.
+      + split.
+        * (* Prove s d *)
+          assumption.
+        * (* Prove tree_forall s r *)
+          apply tree_forall_implies with (P := fun x => s x /\ d < x).
+          -- apply IHr. apply H_r.
+          -- intros x [s_x _]. assumption.
+  Qed.
 
   (* Next, let's prove that elements of the left subtree of a
      BST node are less than the node's data and that all
