@@ -908,7 +908,20 @@ Module Impl.
       bst (Node l d r) s ->
       tree_forall (fun x => x < d) l /\ tree_forall (fun x => d < x) r.
   Proof.
-  Admitted.
+    intros l d r s H.
+    split.
+    - apply tree_forall_implies with (P := fun x => s x /\ x < d).
+      + apply bst_implies with (s := fun x => s x /\ x < d).
+        apply H.
+      + intros x [s_x x_l].
+        assumption.
+    - apply tree_forall_implies with (P := fun x => s x /\ d < x).
+      + apply bst_implies with (s := fun x => s x /\ d < x).
+        apply H.
+      + intros x [s_x d_x].
+        assumption.
+  Qed.
+
 
   (* Here is another convenient property: if two sets are the
      same, then a bst representing one also represents the
@@ -920,6 +933,25 @@ Module Impl.
       (forall x, P x <-> Q x) ->
       bst tr Q.
   Proof.
+    intros tr P Q H_bst H_iff.
+    induction tr as [ | l IHl d r IHr].
+    - (* Case: Leaf *)
+      simpl.
+      intros x H_x.
+      specialize (H_iff x).
+      apply H_iff in H_x.
+      simpl in H_bst.
+      specialize (H_bst x).
+      contradiction.
+    - (* Case: Node l d r *)
+      simpl.
+      destruct H_bst as [H_d [H_l H_r]].
+      split.
+      + apply H_iff.
+        apply H_d.
+      + split.
+        * apply H_l.
+        * apply IHr. apply H_r.
   Admitted.
 
   (* Let's prove something about the way we can map over binary search
