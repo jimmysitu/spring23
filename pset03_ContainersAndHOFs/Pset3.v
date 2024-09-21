@@ -989,6 +989,39 @@ Module Impl.
       (forall x, P x <-> Q (f x)) ->
       bst (tree_map f tr) Q.
   Proof.
+    intros tr.
+    induction tr as [ | l IHl d r IHr].
+    - (* Case: Leaf *)
+      intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
+      simpl.
+      constructor.
+    - (* Case: Node l d r *)
+      simpl.
+      constructor.
+      + (* Prove that f d is the root of the mapped tree *)
+        apply H_iff.
+        apply H_bst.
+      + (* Prove that the left subtree is a BST *)
+        apply IHl.
+        * (* Prove that the left subtree is a BST *)
+          apply H_bst.
+        * (* Prove left inverse *)
+          apply H_left_inverse.
+        * (* Prove strict monotonicity *)
+          apply H_strict_mono.
+        * (* Prove the equivalence of predicates *)
+          apply H_iff.
+      + (* Prove that the right subtree is a BST *)
+        apply IHr.
+        * (* Prove that the right subtree is a BST *)
+          apply H_bst.
+        * (* Prove left inverse *)
+          apply H_left_inverse.
+        * (* Prove strict monotonicity *)
+          apply H_strict_mono.
+        * (* Prove the equivalence of predicates *)
+          apply H_iff.
+  Qed.
   Admitted.
 
   (* Monotone functions can be characterized as monotone increasing or 
