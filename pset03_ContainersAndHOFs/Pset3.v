@@ -933,9 +933,10 @@ Module Impl.
       (forall x, P x <-> Q x) ->
       bst tr Q.
   Proof.
-    intros tr P Q H_bst H_iff.
+    intros tr.
     induction tr as [ | l IHl d r IHr].
     - (* Case: Leaf *)
+      intros P Q H_bst H_iff.
       simpl.
       intros x H_x.
       specialize (H_iff x).
@@ -944,15 +945,30 @@ Module Impl.
       specialize (H_bst x).
       contradiction.
     - (* Case: Node l d r *)
-      simpl.
+      simpl in *.
+      intros P Q H_bst H_iff.
       destruct H_bst as [H_d [H_l H_r]].
       split.
       + apply H_iff.
         apply H_d.
       + split.
-        * apply H_l.
-        * apply IHr. apply H_r.
-  Admitted.
+        * apply IHl with (P := fun x => P x /\ x < d).
+          -- assumption.
+          -- intros x.
+             split; intros [HP Hx]; split.
+             { apply H_iff. assumption. }
+             { assumption. }
+             { apply H_iff. assumption. }
+             { assumption. }
+        * apply IHr with (P := fun x => P x /\ d < x).
+          -- assumption.
+          -- intros x.
+             split; intros [HP Hx]; split.
+             { apply H_iff. assumption. }
+             { assumption. }
+             { apply H_iff. assumption. }
+             { assumption. }
+  Qed.
 
   (* Let's prove something about the way we can map over binary search
      trees while preserving the bst structure. In order to preserve the
