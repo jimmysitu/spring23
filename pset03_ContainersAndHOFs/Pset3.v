@@ -992,37 +992,57 @@ Module Impl.
     intros tr.
     induction tr as [ | l IHl d r IHr].
     - (* Case: Leaf *)
+      unfold tree_map.
       intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
-      simpl.
-      constructor.
+      apply bst_iff with (P := P).
+      + assumption.
+      + intros x.
+        split; intros.
+        * simpl in H_bst.
+          specialize (H_bst x).
+          contradiction.
+        * simpl in H_bst.
+          specialize (H_bst x).
+          Search (~ _).
+          auto.
     - (* Case: Node l d r *)
-      simpl.
-      constructor.
-      + (* Prove that f d is the root of the mapped tree *)
-        apply H_iff.
-        apply H_bst.
-      + (* Prove that the left subtree is a BST *)
-        apply IHl.
-        * (* Prove that the left subtree is a BST *)
-          apply H_bst.
-        * (* Prove left inverse *)
-          apply H_left_inverse.
-        * (* Prove strict monotonicity *)
-          apply H_strict_mono.
-        * (* Prove the equivalence of predicates *)
-          apply H_iff.
-      + (* Prove that the right subtree is a BST *)
-        apply IHr.
-        * (* Prove that the right subtree is a BST *)
-          apply H_bst.
-        * (* Prove left inverse *)
-          apply H_left_inverse.
-        * (* Prove strict monotonicity *)
-          apply H_strict_mono.
-        * (* Prove the equivalence of predicates *)
-          apply H_iff.
+      simpl in *.
+      intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
+      destruct H_bst as [H_d [H_l H_r]].
+      split.
+      + apply H_iff.
+        apply H_d.
+      + split.
+        * apply IHl with (P := fun x => P x /\ x < d)
+                         (Q := fun x => Q x /\ x < f d)
+                         (g := g).
+          -- assumption.
+          -- assumption.
+          -- intros x y.
+             specialize (H_strict_mono x y).
+             assumption.
+          -- intros x.
+             split; intros [HP Hx]; split.
+             { apply H_iff. assumption. }
+             { apply -> H_strict_mono. assumption. }
+             { apply H_iff. assumption. }
+             { apply H_strict_mono. assumption. }
+        * apply IHr with (P := fun x => P x /\ d < x)
+                         (Q := fun x => Q x /\ f d < x)
+                         (g := g).
+          -- assumption.
+          -- assumption.
+          -- intros x y.
+             specialize (H_strict_mono x y).
+             assumption.
+          -- intros x.
+             split; intros [HP Hx]; split.
+             { apply H_iff. assumption. }
+             { apply -> H_strict_mono. assumption. }
+             { apply H_iff. assumption. }
+             { apply H_strict_mono. assumption. }
   Qed.
-  Admitted.
+      
 
   (* Monotone functions can be characterized as monotone increasing or 
      monotone decreasing. In the case of a strictly monotonically decreasing
