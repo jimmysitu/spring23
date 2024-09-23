@@ -992,19 +992,15 @@ Module Impl.
     intros tr.
     induction tr as [ | l IHl d r IHr].
     - (* Case: Leaf *)
-      unfold tree_map.
       intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
-      apply bst_iff with (P := P).
-      + assumption.
-      + intros x.
-        split; intros.
-        * simpl in H_bst.
-          specialize (H_bst x).
-          contradiction.
-        * simpl in H_bst.
-          specialize (H_bst x).
-          Search (~ _).
-          auto.
+      simpl in *.
+      intros x.
+      specialize (H_iff (g x)).
+      apply not_iff_compat in H_iff.
+      apply H_iff in H_bst.
+      unfold left_inverse in H_left_inverse.
+      unfold compose in H_left_inverse.
+      unfold id in H_left_inverse.
     - (* Case: Node l d r *)
       simpl in *.
       intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
