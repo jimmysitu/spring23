@@ -998,9 +998,20 @@ Module Impl.
       specialize (H_iff (g x)).
       apply not_iff_compat in H_iff.
       apply H_iff in H_bst.
+      Search (left_inverse).
+      (* With unfold below, f (g x) = x
       unfold left_inverse in H_left_inverse.
       unfold compose in H_left_inverse.
       unfold id in H_left_inverse.
+      *)
+      apply left_invertible_injective with (x:= x) (y:= f (g x)) in H_left_inverse.
+      + rewrite <- H_left_inverse in H_bst.
+        assumption.
+      + f_equal. 
+        unfold left_inverse in H_left_inverse.
+        unfold compose in H_left_inverse.
+        unfold id in H_left_inverse.
+        rewrite H_left_inverse.
     - (* Case: Node l d r *)
       simpl in *.
       intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
