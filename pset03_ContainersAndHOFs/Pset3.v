@@ -1011,7 +1011,10 @@ Module Impl.
         unfold left_inverse in H_left_inverse.
         unfold compose in H_left_inverse.
         unfold id in H_left_inverse.
-        rewrite H_left_inverse.
+        assert (Heq := f_equal (fun h => h x) H_left_inverse).
+        simpl in Heq.
+        rewrite Heq.
+        reflexivity.
     - (* Case: Node l d r *)
       simpl in *.
       intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
