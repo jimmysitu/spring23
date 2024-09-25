@@ -1011,9 +1011,8 @@ Module Impl.
         unfold left_inverse in H_left_inverse.
         unfold compose in H_left_inverse.
         unfold id in H_left_inverse.
-        assert (Heq := f_equal (fun h => h x) H_left_inverse).
-        simpl in Heq.
-        rewrite Heq.
+        apply (f_equal (fun h => h x)) in H_left_inverse.
+        rewrite H_left_inverse.
         reflexivity.
     - (* Case: Node l d r *)
       simpl in *.
@@ -1072,7 +1071,72 @@ Module Impl.
       (forall x, P x <-> Q (f x)) ->
       bst (mirror (tree_map f tr)) Q.
   Proof.
-  Admitted.
+    intros tr.
+    induction tr as [ | l IHl d r IHr].
+    - (* Case: Leaf *)
+      intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
+      simpl in *.
+      intros x.
+      specialize (H_iff (g x)).
+      apply not_iff_compat in H_iff.
+      apply H_iff in H_bst.
+      apply left_invertible_injective with (x:= x) (y:= f (g x)) in H_left_inverse.
+      + rewrite <- H_left_inverse in H_bst.
+        assumption.
+      + f_equal.
+        unfold left_inverse in H_left_inverse.
+        unfold compose in H_left_inverse.
+        unfold id in H_left_inverse.
+        apply (f_equal (fun h => h x)) in H_left_inverse.
+        rewrite H_left_inverse.
+        reflexivity.
+    - (* Case: Node l d r *)
+      simpl in *.
+      intros P Q f g H_bst H_left_inverse H_strict_mono H_iff.
+      destruct H_bst as [H_d [H_l H_r]].
+      split.
+      + apply H_iff.
+        apply H_d.
+      + split.
+        * apply IHr with (P := fun x => P x /\ d < x)
+                         (Q := fun x => Q x /\ x < f d)
+                         (g := g).
+          -- assumption.
+          -- assumption.
+          -- intros x y.
+             specialize (H_strict_mono x y).
+             assumption.
+          -- intros x.
+             split; intros [HP Hx]; split.
+             { apply H_iff. assumption. }
+             { 
+                Search ( ?x > _ -> _ < ?x ).
+                apply Z.gt_lt.
+                apply H_strict_mono. 
+               assumption.
+             }
+             { apply H_iff. assumption. }
+             { 
+                apply H_strict_mono.
+                apply Z.lt_gt. 
+                assumption.
+             }
+        * apply IHl with (P := fun x => P x /\ x < d)
+                         (Q := fun x => Q x /\ f d < x)
+                         (g := g).
+          -- assumption.
+          -- assumption.
+          -- intros x y.
+             specialize (H_strict_mono x y).
+             assumption.
+          -- intros x.
+             split; intros [HP Hx]; split.
+             { apply H_iff. assumption. }
+             { apply Z.gt_lt. apply H_strict_mono. assumption. }
+             { apply H_iff. assumption. }
+             { apply H_strict_mono. apply Z.lt_gt. assumption. }
+  Qed.
+  
   
   (* [member] computes whether [a] is in [tr], but to do so it *relies* on the
      [bst] property -- if [tr] is not a valid binary search tree, [member]
