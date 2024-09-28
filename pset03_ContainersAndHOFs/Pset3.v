@@ -1156,7 +1156,61 @@ Module Impl.
   Lemma member_bst : forall tr s a,
       bst tr s -> bst_member a tr = true <-> s a.
   Proof.
-  Admitted.
+    split.
+    - (* -> direction *)
+      generalize dependent a.
+      generalize dependent s.
+      induction tr as [ | l IHl d r IHr].
+      + (* Case: tr is Leaf *)
+        intros s H.
+        simpl in H. discriminate.
+      + (* Case: tr is Node l v r *)
+        intros s H_bst a H.
+        simpl in H. 
+        simpl in H_bst.
+        destruct H_bst as [Hsd [Hl Hr]].
+        case (compare a d) in H.
+        * (* Case: a < d and a = d *)
+          destruct s0.
+          { (* Case: a < d *)
+            apply IHl with (a := a) in Hl.
+            apply Hl.
+            assumption.
+          }
+          { (* Case: a = d *)
+            rewrite e. assumption.
+          }
+        * (* Case: a > v *)
+          apply IHr with (a := a) in Hr.
+          destruct Hr.
+          -- assumption.
+          -- assumption.
+    - (* <- direction *)
+      generalize dependent a.
+      generalize dependent s.
+      induction tr as [ | l IHl d r IHr].
+      + (* Case: tr is Leaf *)
+        intros s H_bst a H.
+        simpl in H_bst.
+        unfold not in H_bst.
+        apply H_bst in H. contradiction.
+      + (* Case: tr is Node l v r *)
+        intros s H_bst a H.
+        simpl.
+        destruct H_bst as [Hsd [Hl Hr]].
+        case (compare a d).
+        * (* Case: a < d and  a = d *)
+          destruct s0.
+          -- apply IHl with (s := (fun x => s x /\ x < d)) (a := a) in Hl.
+            ++ assumption.
+            ++ split; assumption.
+          -- reflexivity.
+        * (* Case: a > d *)
+          intros Had.
+          apply IHr with (s := (fun x => s x /\ d < x)) (a := a) in Hr.
+          -- assumption.
+          -- split; assumption.
+  Qed. 
 
   (* Next week, we will look at insertion and deletion in
      BSTs. *)
